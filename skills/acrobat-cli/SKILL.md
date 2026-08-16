@@ -38,6 +38,13 @@ acrobat-cli pdf decrypt encrypted.pdf --password 123 -o decrypted.pdf
 acrobat-cli pdf bookmarks input.pdf
 acrobat-cli pdf inject input.pdf
 
+# Hidden background Acrobat
+acrobat-cli ui open input.pdf
+acrobat-cli ui list
+acrobat-cli ui status --pid <pid>
+acrobat-cli ui close --pid <pid>
+acrobat-cli ui close-all
+
 # List Acrobat windows
 acrobat-cli list
 
@@ -123,6 +130,18 @@ acrobat-cli pdf inject <file>
 ```
 
 `pdf extract` finds the chapter containing `--chapter`, then selects child bookmarks matching the comma-separated `--sections` keywords (e.g. `综合,拓展`), and writes those pages to `--output`.
+
+### ui
+
+```bash
+acrobat-cli ui open <pdf>
+acrobat-cli ui close --pid <pid>
+acrobat-cli ui list
+acrobat-cli ui status --pid <pid>
+acrobat-cli ui close-all
+```
+
+Launches Acrobat as an independent hidden background instance using `/n` and `Start-Process -WindowStyle Hidden`. It records the PID and only closes instances started by the CLI, so your normal Acrobat windows are not affected.
 
 ### list
 

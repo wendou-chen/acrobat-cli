@@ -18,6 +18,11 @@ Windows 下用于 Acrobat 自动化的小型 CLI，重点解决 `outline-markdow
 | `acrobat-cli pdf decrypt <file> --password <p> -o out.pdf` | 解密 PDF |
 | `acrobat-cli pdf bookmarks <file>` | 输出书签树 |
 | `acrobat-cli pdf inject <file>` | 注入 self-close OpenAction |
+| `acrobat-cli ui open <pdf>` | 以隐藏后台实例打开 PDF |
+| `acrobat-cli ui close --pid <pid>` | 关闭指定隐藏实例 |
+| `acrobat-cli ui list` | 列出 CLI 启动的隐藏实例 |
+| `acrobat-cli ui status --pid <pid>` | 查看隐藏实例状态 |
+| `acrobat-cli ui close-all` | 关闭所有 CLI 启动的隐藏实例 |
 | `acrobat-cli watch [--dir=<path>] [--poll=<ms>] [--once]` | 监听目录中的 outline 临时 PDF，自动注入 self-close |
 | `acrobat-cli list` | 列出 Acrobat 窗口 |
 | `acrobat-cli close-outline` | 尽力关闭标题匹配 outline 的 Acrobat 标签（Ctrl+W） |
@@ -140,6 +145,11 @@ acrobat-cli pdf bookmarks input.pdf
 
 # 加密
 acrobat-cli pdf encrypt input.pdf --user-password 123 --owner-password 456 -o encrypted.pdf
+
+# 后台隐藏打开 Acrobat
+acrobat-cli ui open input.pdf
+acrobat-cli ui list
+acrobat-cli ui close-all
 ```
 
 ## 技能

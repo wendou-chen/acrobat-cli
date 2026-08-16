@@ -8,6 +8,7 @@ const { execFile } = require("child_process");
 const { injectSelfClose, SELF_CLOSE_JS } = require("./lib/inject.js");
 const { runPython } = require("./lib/python.js");
 const { runPdfCommand } = require("./commands/pdf.js");
+const { runUiCommand } = require("./commands/ui.js");
 
 const OUTLINE_RE = /outline-markdown-export-native-.*\.pdf$/i;
 const DEFAULT_POLL_MS = 500;
@@ -42,6 +43,8 @@ Commands:
   pdf <command> [options]          PDF document operations.
                                    Commands: info, merge, split, rotate, delete,
                                    extract, encrypt, decrypt, bookmarks, inject.
+  ui <command> [options]           Control hidden background Acrobat instances.
+                                   Commands: open, close, list, status, close-all.
   list                             List Acrobat windows and their titles.
   close-outline                    Best-effort close of Acrobat tabs whose title matches
                                    outline-markdown-export-native-*.pdf (sends Ctrl+W).
@@ -57,6 +60,7 @@ Examples:
   acrobat-cli list
   acrobat-cli close-outline
   acrobat-cli extract --pdf=input.pdf --chapter=相似矩阵 --sections=综合,拓展 --output=out.pdf
+  acrobat-cli ui open input.pdf
 `);
 }
 
@@ -325,6 +329,9 @@ async function main() {
       break;
     case "pdf":
       await runPdfCommand(args);
+      break;
+    case "ui":
+      await runUiCommand(args);
       break;
     case "list":
       await cmdList();
