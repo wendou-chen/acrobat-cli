@@ -10,6 +10,7 @@ Windows 下用于 Acrobat 自动化的小型 CLI，重点解决 `outline-markdow
 |---|---|
 | `acrobat-cli inject <pdf> [--output=<path>]` | 给 PDF 注入 `this.closeDoc(true)` OpenAction，打开后自动关闭 |
 | `acrobat-cli watch [--dir=<path>] [--poll=<ms>] [--once]` | 监听目录中的 outline 临时 PDF，自动注入 self-close |
+| `acrobat-cli extract --pdf=<path> --chapter=<keyword> --sections=<a,b> --output=<path>` | 按书签提取章节页面（如“综合题/拓展题”） |
 | `acrobat-cli list` | 列出 Acrobat 窗口 |
 | `acrobat-cli close-outline` | 尽力关闭标题匹配 outline 的 Acrobat 标签（Ctrl+W） |
 | `acrobat-cli status` | 显示 Acrobat 状态与 TEMP 中的 outline PDF |
@@ -19,6 +20,7 @@ Windows 下用于 Acrobat 自动化的小型 CLI，重点解决 `outline-markdow
 - Windows 10/11
 - Node.js 18+
 - npm
+- Python 3 + `pypdf`（仅 `extract` 命令需要）
 - Adobe Acrobat Pro DC（用于实际 PDF 自动关闭验证）
 - 可选：GitHub CLI `gh`（用于开源仓库操作）
 
@@ -115,6 +117,9 @@ acrobat-cli watch
 
 # 只处理当前已存在的 outline PDF
 acrobat-cli watch --once
+
+# 按书签提取“相似矩阵”章节的综合题+拓展题
+acrobat-cli extract --pdf="D:\a考研\Obsidian Vault\考研数学\习题集\26李林880题-数学一-试题分册.pdf" --chapter="相似矩阵" --sections="综合,拓展" --output="D:\a考研\Obsidian Vault\考研数学\习题集\相似矩阵综合提高篇.pdf"
 ```
 
 ## 技能

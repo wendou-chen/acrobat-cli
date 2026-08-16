@@ -34,6 +34,10 @@ Commands:
                                    outline-markdown-export-native-*.pdf and inject
                                    self-close actions as files appear.
                                    --once: process existing matching files and exit.
+  extract --pdf=<path> --chapter=<keyword> --sections=<a,b> --output=<path>
+                                   Extract pages from a PDF by bookmark sections.
+                                   Example:
+                                     acrobat-cli extract --pdf=input.pdf --chapter=相似矩阵 --sections=综合,拓展 --output=out.pdf
   list                             List Acrobat windows and their titles.
   close-outline                    Best-effort close of Acrobat tabs whose title matches
                                    outline-markdown-export-native-*.pdf (sends Ctrl+W).
@@ -48,6 +52,7 @@ Examples:
   acrobat-cli watch --once
   acrobat-cli list
   acrobat-cli close-outline
+  acrobat-cli extract --pdf=input.pdf --chapter=相似矩阵 --sections=综合,拓展 --output=out.pdf
 `);
 }
 
@@ -162,6 +167,63 @@ async function cmdWatch(args) {
   };
   process.on("SIGINT", stop);
   process.on("SIGTERM", stop);
+}
+
+function runPython(scriptPath, args) {
+  return new Promise((resolve, reject) => {
+    const candidates = process.env.PYTHON ? [process.env.PYTHON] : ["python", "py"];
+    let index = 0;
+    const attempt = () => {
+      if (index >= candidates.length) {
+        reject(new Error("python/py not found. Install Python 3 or set PYTHON env var."));
+        return;
+      }
+      const python = candidates[index++];
+      execFile(python, [scriptPath, ...args], {
+        windowsHide: true,
+        maxBuffer: 8 * 1024 * 1024,
+      }, (err, stdout, stderr) => {
+        if (err) {
+          if (err.code === "ENOENT") {
+            attempt();
+            return;
+          }
+          reject(new Error(stderr.trim() || err.message));
+          return;
+        }
+        resolve(stdout.trim());
+      });
+    };
+    attempt();
+  });
+}
+
+async function cmdExtract(args) {
+  const pdf = args.options.pdf;
+  const chapter = args.options.chapter;
+  const sections = args.options.sections;
+  const output = args.options.output;
+  if (!pdf || !chapter || !sections || !output) {
+    error("extract requires --pdf, --chapter, --sections, --output");
+    return;
+  }
+  if (!fs.existsSync(pdf)) {
+    error(`file not found: ${pdf}`);
+    return;
+  }
+  const scriptPath = path.join(__dirname, "scripts", "extract_by_bookmarks.py");
+  const pyArgs = [
+    "--pdf", pdf,
+    "--chapter", chapter,
+    "--sections", sections,
+    "--output", output,
+  ];
+  try {
+    const out = await runPython(scriptPath, pyArgs);
+    log(out);
+  } catch (e) {
+    error(`extract failed: ${e.message}`);
+  }
 }
 
 function runPowerShell(script) {
@@ -281,6 +343,9 @@ async function main() {
       break;
     case "watch":
       await cmdWatch(args);
+      break;
+    case "extract":
+      await cmdExtract(args);
       break;
     case "list":
       await cmdList();

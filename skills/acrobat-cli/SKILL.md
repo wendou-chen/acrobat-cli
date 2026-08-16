@@ -21,6 +21,9 @@ acrobat-cli watch
 # Watch a custom directory once (process existing files and exit)
 acrobat-cli watch --dir=C:\Temp --once
 
+# Extract pages by bookmark sections (e.g. 综合题/拓展题)
+acrobat-cli extract --pdf=input.pdf --chapter=相似矩阵 --sections=综合,拓展 --output=out.pdf
+
 # List Acrobat windows
 acrobat-cli list
 
@@ -65,6 +68,26 @@ For every matching file it finds, it injects the self-close action. This is usef
 - `--poll=<ms>`: polling interval, default 500 ms.
 - `--once`: process existing matching files and exit instead of watching continuously.
 
+### extract
+
+```bash
+acrobat-cli extract --pdf=<path> --chapter=<keyword> --sections=<a,b> --output=<path>
+```
+
+Extracts pages from a PDF based on bookmark sections. It finds the chapter containing `--chapter`, then selects child bookmarks matching the comma-separated `--sections` keywords (e.g. `综合,拓展`), and writes those pages to `--output`.
+
+Requires Python 3 and `pypdf`:
+
+```bash
+pip install pypdf
+```
+
+Example:
+
+```bash
+acrobat-cli extract --pdf="26李林880题-数学一-试题分册.pdf" --chapter="相似矩阵" --sections="综合,拓展" --output="相似矩阵综合提高篇.pdf"
+```
+
 ### list
 
 ```bash
@@ -107,4 +130,5 @@ acrobat-cli watch --poll=300
 
 ## Resources
 
-No bundled scripts or references are required; the CLI itself is the tool. See the project README for installation.
+- `scripts/extract_by_bookmarks.py` — Python helper used by `extract`
+- See the project README for installation and deployment.
