@@ -15,6 +15,10 @@ Windows 下用于 Acrobat 自动化的小型 CLI，重点解决 `outline-markdow
 | `acrobat-cli pdf delete <file> --pages 2,4 -o out.pdf` | 删除指定页面 |
 | `acrobat-cli pdf insert-blank <file> --after 2 -o out.pdf` | 在指定页后插入空白页 |
 | `acrobat-cli pdf crop <file> --pages 1-3 --box 0,0,300,400 -o out.pdf` | 裁剪指定页面 |
+| `acrobat-cli pdf replace-pages <file> --src src.pdf --range 1-3 -o out.pdf` | 用源 PDF 页面替换指定范围 |
+| `acrobat-cli pdf watermark <file> --text 机密 -o out.pdf` | 添加文字水印 |
+| `acrobat-cli pdf compress <file> -o out.pdf` | 压缩 PDF |
+| `acrobat-cli pdf pdfa <file> -o out.pdf` | 输出最佳努力 PDF/A 兼容文件 |
 | `acrobat-cli pdf extract <file> --chapter <kw> --sections a,b -o out.pdf` | 按书签提取章节页面 |
 | `acrobat-cli pdf encrypt <file> --user-password <p> --owner-password <p> -o out.pdf` | 加密 PDF |
 | `acrobat-cli pdf decrypt <file> --password <p> -o out.pdf` | 解密 PDF |

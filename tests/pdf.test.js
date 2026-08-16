@@ -116,3 +116,41 @@ test("pdf crop keeps page count", async () => {
   assert.strictEqual(loaded.getPageCount(), 2);
   fs.unlinkSync(file); fs.unlinkSync(out);
 });
+
+test("pdf replace-pages replaces a range", async () => {
+  const target = await makeTempPdf(3);
+  const src = await makeTempPdf(2);
+  const out = path.join(os.tmpdir(), `replace-${Date.now()}.pdf`);
+  const result = await runPython(pdfScript("replace_pages"), ["--src", src, "--range", "1-2", "--output", out, target]);
+  assert.match(result, /Replaced pages 1-2/);
+  const loaded = await PDFDocument.load(fs.readFileSync(out));
+  assert.strictEqual(loaded.getPageCount(), 3);
+  fs.unlinkSync(target); fs.unlinkSync(src); fs.unlinkSync(out);
+});
+
+test("pdf watermark writes output", async () => {
+  const file = await makeTempPdf(1);
+  const out = path.join(os.tmpdir(), `watermark-${Date.now()}.pdf`);
+  const result = await runPython(pdfScript("watermark"), ["--text", "test", "--output", out, file]);
+  assert.match(result, /Watermarked/);
+  assert.ok(fs.existsSync(out));
+  fs.unlinkSync(file); fs.unlinkSync(out);
+});
+
+test("pdf compress writes output", async () => {
+  const file = await makeTempPdf(2);
+  const out = path.join(os.tmpdir(), `compress-${Date.now()}.pdf`);
+  const result = await runPython(pdfScript("compress"), ["--output", out, file]);
+  assert.match(result, /Compressed/);
+  assert.ok(fs.existsSync(out));
+  fs.unlinkSync(file); fs.unlinkSync(out);
+});
+
+test("pdf pdfa writes output", async () => {
+  const file = await makeTempPdf(1);
+  const out = path.join(os.tmpdir(), `pdfa-${Date.now()}.pdf`);
+  const result = await runPython(pdfScript("pdfa"), ["--output", out, file]);
+  assert.match(result, /PDF\/A/);
+  assert.ok(fs.existsSync(out));
+  fs.unlinkSync(file); fs.unlinkSync(out);
+});

@@ -35,6 +35,10 @@ acrobat-cli pdf rotate input.pdf --pages 1 --angle 90 -o rotated.pdf
 acrobat-cli pdf delete input.pdf --pages 2,4 -o deleted.pdf
 acrobat-cli pdf insert-blank input.pdf --after 2 -o inserted.pdf
 acrobat-cli pdf crop input.pdf --pages 1-3 --box 0,0,300,400 -o cropped.pdf
+acrobat-cli pdf replace-pages input.pdf --src src.pdf --range 1-3 -o replaced.pdf
+acrobat-cli pdf watermark input.pdf --text 机密 -o watermarked.pdf
+acrobat-cli pdf compress input.pdf -o compressed.pdf
+acrobat-cli pdf pdfa input.pdf -o pdfa.pdf
 acrobat-cli pdf encrypt input.pdf --user-password 123 --owner-password 456 -o encrypted.pdf
 acrobat-cli pdf decrypt encrypted.pdf --password 123 -o decrypted.pdf
 acrobat-cli pdf bookmarks input.pdf
@@ -124,6 +128,18 @@ acrobat-cli pdf insert-blank <file> --after 2 -o inserted.pdf
 
 # Crop pages
 acrobat-cli pdf crop <file> --pages 1-3 --box 0,0,300,400 -o cropped.pdf
+
+# Replace pages
+acrobat-cli pdf replace-pages <file> --src src.pdf --range 1-3 -o replaced.pdf
+
+# Watermark
+acrobat-cli pdf watermark <file> --text 机密 -o watermarked.pdf
+
+# Compress
+acrobat-cli pdf compress <file> -o compressed.pdf
+
+# Best-effort PDF/A
+acrobat-cli pdf pdfa <file> -o pdfa.pdf
 
 # Extract pages by bookmark sections
 acrobat-cli pdf extract <file> --chapter 相似矩阵 --sections="综合,拓展" -o out.pdf

@@ -42,7 +42,8 @@ Commands:
                                      acrobat-cli extract --pdf=input.pdf --chapter=相似矩阵 --sections=综合,拓展 --output=out.pdf
   pdf <command> [options]          PDF document operations.
                                    Commands: info, merge, split, rotate, delete,
-                                   insert-blank, crop, extract, encrypt, decrypt,
+                                   insert-blank, crop, replace-pages, watermark,
+                                   compress, pdfa, extract, encrypt, decrypt,
                                    bookmarks, inject.
   ui <command> [options]           Control hidden background Acrobat instances.
                                    Commands: open, save, save-as, print, export,

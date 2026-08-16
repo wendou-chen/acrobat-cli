@@ -81,6 +81,39 @@ async function cmdCrop(args) {
   return runPython(pdfScript("crop"), ["--pages", pages, "--box", box, "--output", output, file]);
 }
 
+async function cmdReplacePages(args) {
+  const file = args._[0];
+  const src = args.options.src;
+  const range = args.options.range;
+  const output = args.options.output || args.options.o;
+  if (!file || !src || !range) throw new Error("pdf replace-pages requires a file, --src, --range");
+  if (!output) throw new Error("pdf replace-pages requires --output/-o");
+  return runPython(pdfScript("replace_pages"), ["--src", src, "--range", range, "--output", output, file]);
+}
+
+async function cmdWatermark(args) {
+  const file = args._[0];
+  const text = args.options.text;
+  const output = args.options.output || args.options.o;
+  if (!file || !text) throw new Error("pdf watermark requires a file and --text");
+  if (!output) throw new Error("pdf watermark requires --output/-o");
+  return runPython(pdfScript("watermark"), ["--text", text, "--output", output, file]);
+}
+
+async function cmdCompress(args) {
+  const file = args._[0];
+  const output = args.options.output || args.options.o;
+  if (!file || !output) throw new Error("pdf compress requires a file and --output/-o");
+  return runPython(pdfScript("compress"), ["--output", output, file]);
+}
+
+async function cmdPdfa(args) {
+  const file = args._[0];
+  const output = args.options.output || args.options.o;
+  if (!file || !output) throw new Error("pdf pdfa requires a file and --output/-o");
+  return runPython(pdfScript("pdfa"), ["--output", output, file]);
+}
+
 async function cmdExtract(args) {
   const file = args._[0] || args.options.pdf;
   const chapter = args.options.chapter;
@@ -142,6 +175,10 @@ const handlers = {
   delete: cmdDelete,
   "insert-blank": cmdInsertBlank,
   crop: cmdCrop,
+  "replace-pages": cmdReplacePages,
+  watermark: cmdWatermark,
+  compress: cmdCompress,
+  pdfa: cmdPdfa,
   extract: cmdExtract,
   encrypt: cmdEncrypt,
   decrypt: cmdDecrypt,
