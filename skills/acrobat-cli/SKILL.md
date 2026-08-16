@@ -51,6 +51,13 @@ acrobat-cli ui save-as input.pdf output.pdf
 acrobat-cli ui print input.pdf --pages 1-3
 acrobat-cli ui export input.pdf --format txt -o output.txt
 acrobat-cli ui list
+
+# OCR / form / annotate / sign
+acrobat-cli ocr input.pdf -o output.txt
+acrobat-cli form list input.pdf
+acrobat-cli form fill input.pdf --field name --value 张三 -o filled.pdf
+acrobat-cli annotate input.pdf --page 1 --rect 10,10,100,100 -o annotated.pdf
+acrobat-cli sign input.pdf --text 签名 --page 1 --rect 10,10,200,100 -o signed.pdf
 acrobat-cli ui status --pid <pid>
 acrobat-cli ui close --pid <pid>
 acrobat-cli ui close-all
@@ -198,6 +205,39 @@ acrobat-cli status
 ```
 
 Shows whether Acrobat is running, its window titles, and outline temp PDFs present in the system temp folder.
+
+### ocr
+
+```bash
+acrobat-cli ocr <pdf> [--lang chi_sim] -o <txt>
+```
+
+Uses Tesseract to OCR the PDF into a text file.
+
+### form
+
+```bash
+acrobat-cli form list <pdf>
+acrobat-cli form fill <pdf> --field <name> --value <value> -o out.pdf
+```
+
+Lists or fills AcroForm fields.
+
+### annotate
+
+```bash
+acrobat-cli annotate <pdf> --page <n> --rect <x0,y0,x1,y1> [--type highlight|text] [--text <s>] -o out.pdf
+```
+
+Adds a highlight or text annotation to a page.
+
+### sign
+
+```bash
+acrobat-cli sign <pdf> --text <s> --page <n> --rect <x0,y0,x1,y1> -o out.pdf
+```
+
+Stamps a visible signature text onto a page.
 
 ## Windows notes
 

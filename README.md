@@ -30,6 +30,11 @@ Windows 下用于 Acrobat 自动化的小型 CLI，重点解决 `outline-markdow
 | `acrobat-cli ui print <pdf> [--pages 1-3]` | 用隐藏 Acrobat COM 打印 PDF |
 | `acrobat-cli ui export <pdf> --format txt/png/docx/xlsx -o <output>` | 导出 PDF 内容 |
 | `acrobat-cli ui close --pid <pid>` | 关闭指定隐藏实例 |
+| `acrobat-cli ocr <pdf> --lang chi_sim -o out.txt` | OCR 识别为文本 |
+| `acrobat-cli form list <pdf>` | 列出表单字段 |
+| `acrobat-cli form fill <pdf> --field name --value 张三 -o out.pdf` | 填写表单字段 |
+| `acrobat-cli annotate <pdf> --page 1 --rect ... -o out.pdf` | 添加注释/高亮 |
+| `acrobat-cli sign <pdf> --text 签名 --page 1 --rect ... -o out.pdf` | 添加可见签名文本 |
 | `acrobat-cli ui list` | 列出 CLI 启动的隐藏实例 |
 | `acrobat-cli ui status --pid <pid>` | 查看隐藏实例状态 |
 | `acrobat-cli ui close-all` | 关闭所有 CLI 启动的隐藏实例 |

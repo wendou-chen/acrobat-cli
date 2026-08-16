@@ -9,6 +9,7 @@ const { injectSelfClose, SELF_CLOSE_JS } = require("./lib/inject.js");
 const { runPython } = require("./lib/python.js");
 const { runPdfCommand } = require("./commands/pdf.js");
 const { runUiCommand } = require("./commands/ui.js");
+const { runFormCommand } = require("./commands/form.js");
 
 const OUTLINE_RE = /outline-markdown-export-native-.*\.pdf$/i;
 const DEFAULT_POLL_MS = 500;
@@ -45,6 +46,13 @@ Commands:
                                    insert-blank, crop, replace-pages, watermark,
                                    compress, pdfa, extract, encrypt, decrypt,
                                    bookmarks, inject.
+  ocr <pdf> [--lang <lang>] -o <txt>  OCR a PDF to text using Tesseract.
+  form <command> [options]         PDF form operations.
+                                   Commands: list, fill.
+  annotate <pdf> --page <n> --rect <x0,y0,x1,y1> [--type highlight|text] [--text <s>] -o out.pdf
+                                   Add annotations.
+  sign <pdf> --text <s> --page <n> --rect <x0,y0,x1,y1> -o out.pdf
+                                   Stamp a visible signature text.
   ui <command> [options]           Control hidden background Acrobat instances.
                                    Commands: open, save, save-as, print, export,
                                    close, list, status, close-all.
@@ -209,6 +217,64 @@ async function cmdExtract(args) {
   }
 }
 
+async function cmdOcr(args) {
+  const file = args._[0];
+  const output = args.options.output || args.options.o;
+  if (!file || !output) {
+    error("ocr requires a PDF path and --output/-o");
+    return;
+  }
+  const lang = args.options.lang || "chi_sim";
+  const scriptPath = path.join(__dirname, "scripts", "ocr.py");
+  try {
+    const out = await runPython(scriptPath, ["--lang", lang, "--output", output, file]);
+    log(out);
+  } catch (e) {
+    error(`ocr failed: ${e.message}`);
+  }
+}
+
+async function cmdAnnotate(args) {
+  const file = args._[0];
+  const type = args.options.type || "highlight";
+  const page = Number(args.options.page);
+  const rect = args.options.rect;
+  const output = args.options.output || args.options.o;
+  if (!file || !Number.isInteger(page) || !rect || !output) {
+    error("annotate requires a PDF path, --page, --rect, --output/-o");
+    return;
+  }
+  const text = args.options.text || "";
+  const scriptPath = path.join(__dirname, "scripts", "annotate.py");
+  const pyArgs = ["--type", type, "--page", String(page), "--rect", rect, "--text", text, "--output", output, file];
+  try {
+    const out = await runPython(scriptPath, pyArgs);
+    log(out);
+  } catch (e) {
+    error(`annotate failed: ${e.message}`);
+  }
+}
+
+async function cmdSign(args) {
+  const file = args._[0];
+  const text = args.options.text;
+  const page = Number(args.options.page || 1);
+  const rect = args.options.rect;
+  const output = args.options.output || args.options.o;
+  if (!file || !text || !rect || !output) {
+    error("sign requires a PDF path, --text, --rect, --output/-o");
+    return;
+  }
+  const scriptPath = path.join(__dirname, "scripts", "sign.py");
+  const pyArgs = ["--text", text, "--page", String(page), "--rect", rect, "--output", output, file];
+  try {
+    const out = await runPython(scriptPath, pyArgs);
+    log(out);
+  } catch (e) {
+    error(`sign failed: ${e.message}`);
+  }
+}
+
 function runPowerShell(script) {
   return new Promise((resolve, reject) => {
     const ps = process.env.SystemRoot
@@ -332,6 +398,18 @@ async function main() {
       break;
     case "pdf":
       await runPdfCommand(args);
+      break;
+    case "ocr":
+      await cmdOcr(args);
+      break;
+    case "form":
+      await runFormCommand(args);
+      break;
+    case "annotate":
+      await cmdAnnotate(args);
+      break;
+    case "sign":
+      await cmdSign(args);
       break;
     case "ui":
       await runUiCommand(args);
