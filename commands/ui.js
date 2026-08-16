@@ -1,5 +1,6 @@
 "use strict";
 
+const path = require("path");
 const {
   launchHidden,
   closePid,
@@ -8,6 +9,7 @@ const {
   closeAll,
 } = require("../lib/background.js");
 const { save, saveAs, printPdf } = require("../lib/com.js");
+const { runPython } = require("../lib/python.js");
 
 async function cmdOpen(args) {
   const file = args._[0];
@@ -47,6 +49,18 @@ async function cmdPrint(args) {
   return `Printed: ${file}`;
 }
 
+async function cmdExport(args) {
+  const file = args._[0];
+  const format = args.options.format;
+  const output = args.options.output || args.options.o;
+  if (!file) throw new Error("ui export requires a PDF path");
+  if (!format) throw new Error("ui export requires --format txt|png|docx|xlsx");
+  if (!output) throw new Error("ui export requires --output/-o");
+  const script = path.join(__dirname, "..", "scripts", "export_pdf.py");
+  const out = await runPython(script, ["--format", format, "--output", output, file]);
+  return out;
+}
+
 async function cmdClose(args) {
   const pid = Number(args.options.pid);
   if (!pid) throw new Error("ui close requires --pid");
@@ -77,6 +91,7 @@ const handlers = {
   save: cmdSave,
   "save-as": cmdSaveAs,
   print: cmdPrint,
+  export: cmdExport,
   close: cmdClose,
   list: cmdList,
   status: cmdStatus,

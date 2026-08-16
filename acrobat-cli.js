@@ -45,7 +45,8 @@ Commands:
                                    insert-blank, crop, extract, encrypt, decrypt,
                                    bookmarks, inject.
   ui <command> [options]           Control hidden background Acrobat instances.
-                                   Commands: open, save, save-as, print, close, list, status, close-all.
+                                   Commands: open, save, save-as, print, export,
+                                   close, list, status, close-all.
   list                             List Acrobat windows and their titles.
   close-outline                    Best-effort close of Acrobat tabs whose title matches
                                    outline-markdown-export-native-*.pdf (sends Ctrl+W).
