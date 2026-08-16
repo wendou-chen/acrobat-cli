@@ -8,7 +8,7 @@ const {
   isPidAlive,
   closeAll,
 } = require("../lib/background.js");
-const { save, saveAs, printPdf } = require("../lib/com.js");
+const { save, saveAs, printPdf, exportNative } = require("../lib/com.js");
 const { runPython } = require("../lib/python.js");
 
 async function cmdOpen(args) {
@@ -54,8 +54,22 @@ async function cmdExport(args) {
   const format = args.options.format;
   const output = args.options.output || args.options.o;
   if (!file) throw new Error("ui export requires a PDF path");
-  if (!format) throw new Error("ui export requires --format txt|png|docx|xlsx");
+  if (!format) throw new Error("ui export requires --format txt|png|docx|xlsx|pptx|html");
   if (!output) throw new Error("ui export requires --output/-o");
+
+  const nativeFormats = new Set(["docx", "xlsx", "pptx", "html", "txt"]);
+  if (nativeFormats.has(format)) {
+    try {
+      await exportNative(file, format, output);
+      return `Native Acrobat export -> ${output}`;
+    } catch (e) {
+      // Native Acrobat export may be unavailable in this install; fall back to Python libraries.
+      const script = path.join(__dirname, "..", "scripts", "export_pdf.py");
+      const out = await runPython(script, ["--format", format, "--output", output, file]);
+      return `Native export failed (${e.message}); used Python fallback.\n${out}`;
+    }
+  }
+
   const script = path.join(__dirname, "..", "scripts", "export_pdf.py");
   const out = await runPython(script, ["--format", format, "--output", output, file]);
   return out;

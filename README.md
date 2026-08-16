@@ -28,7 +28,7 @@ Windows 下用于 Acrobat 自动化的小型 CLI，重点解决 `outline-markdow
 | `acrobat-cli ui save <pdf>` | 用隐藏 Acrobat COM 保存 PDF |
 | `acrobat-cli ui save-as <pdf> <output>` | 用隐藏 Acrobat COM 另存 PDF |
 | `acrobat-cli ui print <pdf> [--pages 1-3]` | 用隐藏 Acrobat COM 打印 PDF |
-| `acrobat-cli ui export <pdf> --format txt/png/docx/xlsx -o <output>` | 导出 PDF 内容 |
+| `acrobat-cli ui export <pdf> --format txt/png/docx/xlsx/pptx/html -o <output>` | 导出 PDF 内容（优先 Acrobat 原生导出，失败自动回退 Python） |
 | `acrobat-cli ui close --pid <pid>` | 关闭指定隐藏实例 |
 | `acrobat-cli ocr <pdf> --lang chi_sim -o out.txt` | OCR 识别为文本 |
 | `acrobat-cli form list <pdf>` | 列出表单字段 |
