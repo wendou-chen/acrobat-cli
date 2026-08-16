@@ -42,6 +42,22 @@ After applying the registry keys:
 
 The fix is verified when only the PDF document window and normal Acrobat UI are visible.
 
+## Important findings from real debugging
+
+- Opening Acrobat **with a PDF** does not show the login/Home popup after the registry keys are applied.
+- Opening Acrobat **without a PDF** may still show the Home screen (visible `EmbeddedWB` / `Internet Explorer_Server` windows) on some versions, even with `bShowWelcomeScreen=0`, `HomeScreenOptionWhenDocClosed=0`, `bAddCustomFile=0`, and `bHideHelpWelcome=1`.
+- In tests, `bEnableAcrobatHS` did **not** reset on normal close; the earlier reappearance was caused by the value being absent (e.g., after manual revert or an update).
+- Deleting `AcroCEF.exe` is not a permanent fix. It does not remove the Home screen; it only forces Acrobat to use the embedded IE fallback.
+
+## Keeping the fix durable
+
+Because Acrobat/updates may remove HKCU values, install the scheduled tasks:
+
+- `AcrobatWelcomeFix` (logon)
+- `AcrobatWelcomeFixHourly` (every 30 minutes)
+
+Both run `keep-alive.ps1`, which re-applies every registry value. HKLM policy values are the most durable because they live under `SOFTWARE\Policies\Adobe`.
+
 ## Revert
 
-Delete the four registry values listed in SKILL.md. No other system state is changed by this skill.
+Delete the registry values listed in SKILL.md and remove the two scheduled tasks. No other system state is changed by this skill.
