@@ -40,6 +40,7 @@ acrobat-cli pdf inject input.pdf
 
 # Hidden background Acrobat
 acrobat-cli ui open input.pdf
+acrobat-cli ui save-as input.pdf output.pdf
 acrobat-cli ui list
 acrobat-cli ui status --pid <pid>
 acrobat-cli ui close --pid <pid>
@@ -135,13 +136,14 @@ acrobat-cli pdf inject <file>
 
 ```bash
 acrobat-cli ui open <pdf>
+acrobat-cli ui save-as <pdf> <output>
 acrobat-cli ui close --pid <pid>
 acrobat-cli ui list
 acrobat-cli ui status --pid <pid>
 acrobat-cli ui close-all
 ```
 
-Launches Acrobat as an independent hidden background instance using `/n` and `Start-Process -WindowStyle Hidden`. It records the PID and only closes instances started by the CLI, so your normal Acrobat windows are not affected.
+Launches Acrobat as an independent hidden background instance using `/n` and `Start-Process -WindowStyle Hidden`. It records the PID and only closes instances started by the CLI, so your normal Acrobat windows are not affected. `save-as` uses Acrobat COM in hidden mode to save a PDF to a new path.
 
 ### list
 

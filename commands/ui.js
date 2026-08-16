@@ -7,12 +7,22 @@ const {
   isPidAlive,
   closeAll,
 } = require("../lib/background.js");
+const { saveAs } = require("../lib/com.js");
 
 async function cmdOpen(args) {
   const file = args._[0];
   if (!file) throw new Error("ui open requires a PDF path");
   const pid = await launchHidden(file);
   return `Opened hidden Acrobat PID ${pid}: ${file}`;
+}
+
+async function cmdSaveAs(args) {
+  const src = args._[0];
+  const dst = args._[1] || args.options.output || args.options.o;
+  if (!src) throw new Error("ui save-as requires a source PDF path");
+  if (!dst) throw new Error("ui save-as requires an output path");
+  await saveAs(src, dst);
+  return `Saved as: ${dst}`;
 }
 
 async function cmdClose(args) {
@@ -42,6 +52,7 @@ async function cmdCloseAll() {
 
 const handlers = {
   open: cmdOpen,
+  "save-as": cmdSaveAs,
   close: cmdClose,
   list: cmdList,
   status: cmdStatus,
