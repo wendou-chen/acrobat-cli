@@ -1,14 +1,14 @@
 {
   "name": "acrobat-cli",
   "version": "0.1.0",
-  "description": "CLI for Acrobat automation: inject self-close actions into outline temp PDFs, watch temp folder, list Acrobat windows, and close outline tabs.",
+  "description": "CLI for Acrobat/PDF automation: inject self-close actions, watch temp folder, list Acrobat windows, extract/bookmark PDF sections, and more PDF document operations.",
   "license": "MIT",
   "bin": {
     "acrobat-cli": "acrobat-cli.js"
   },
   "scripts": {
     "start": "node acrobat-cli.js",
-    "test": "node tests/smoke.test.js"
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
     "pdf-lib": "^1.17.1"

@@ -8,9 +8,17 @@ Windows 下用于 Acrobat 自动化的小型 CLI，重点解决 `outline-markdow
 
 | 命令 | 说明 |
 |---|---|
-| `acrobat-cli inject <pdf> [--output=<path>]` | 给 PDF 注入 `this.closeDoc(true)` OpenAction，打开后自动关闭 |
+| `acrobat-cli pdf info <file>` | 显示 PDF 页数、加密状态、元数据 |
+| `acrobat-cli pdf merge <files...> -o out.pdf` | 合并多个 PDF |
+| `acrobat-cli pdf split <file> --ranges 1-3,5 -o outdir` | 按页码范围拆分 PDF |
+| `acrobat-cli pdf rotate <file> --pages 1-3 --angle 90 -o out.pdf` | 旋转指定页面 |
+| `acrobat-cli pdf delete <file> --pages 2,4 -o out.pdf` | 删除指定页面 |
+| `acrobat-cli pdf extract <file> --chapter <kw> --sections a,b -o out.pdf` | 按书签提取章节页面 |
+| `acrobat-cli pdf encrypt <file> --user-password <p> --owner-password <p> -o out.pdf` | 加密 PDF |
+| `acrobat-cli pdf decrypt <file> --password <p> -o out.pdf` | 解密 PDF |
+| `acrobat-cli pdf bookmarks <file>` | 输出书签树 |
+| `acrobat-cli pdf inject <file>` | 注入 self-close OpenAction |
 | `acrobat-cli watch [--dir=<path>] [--poll=<ms>] [--once]` | 监听目录中的 outline 临时 PDF，自动注入 self-close |
-| `acrobat-cli extract --pdf=<path> --chapter=<keyword> --sections=<a,b> --output=<path>` | 按书签提取章节页面（如“综合题/拓展题”） |
 | `acrobat-cli list` | 列出 Acrobat 窗口 |
 | `acrobat-cli close-outline` | 尽力关闭标题匹配 outline 的 Acrobat 标签（Ctrl+W） |
 | `acrobat-cli status` | 显示 Acrobat 状态与 TEMP 中的 outline PDF |
@@ -20,7 +28,7 @@ Windows 下用于 Acrobat 自动化的小型 CLI，重点解决 `outline-markdow
 - Windows 10/11
 - Node.js 18+
 - npm
-- Python 3 + `pypdf`（仅 `extract` 命令需要）
+- Python 3 + `pypdf`（`pdf` 子命令需要）
 - Adobe Acrobat Pro DC（用于实际 PDF 自动关闭验证）
 - 可选：GitHub CLI `gh`（用于开源仓库操作）
 
@@ -119,7 +127,19 @@ acrobat-cli watch
 acrobat-cli watch --once
 
 # 按书签提取“相似矩阵”章节的综合题+拓展题
-acrobat-cli extract --pdf="D:\a考研\Obsidian Vault\考研数学\习题集\26李林880题-数学一-试题分册.pdf" --chapter="相似矩阵" --sections="综合,拓展" --output="D:\a考研\Obsidian Vault\考研数学\习题集\相似矩阵综合提高篇.pdf"
+acrobat-cli pdf extract "D:\a考研\Obsidian Vault\考研数学\习题集\26李林880题-数学一-试题分册.pdf" --chapter "相似矩阵" --sections="综合,拓展" -o "D:\a考研\Obsidian Vault\考研数学\习题集\相似矩阵综合提高篇.pdf"
+
+# 合并 PDF
+acrobat-cli pdf merge a.pdf b.pdf -o merged.pdf
+
+# 拆分 PDF
+acrobat-cli pdf split input.pdf --ranges 1-3,5 -o split_dir
+
+# 查看书签
+acrobat-cli pdf bookmarks input.pdf
+
+# 加密
+acrobat-cli pdf encrypt input.pdf --user-password 123 --owner-password 456 -o encrypted.pdf
 ```
 
 ## 技能

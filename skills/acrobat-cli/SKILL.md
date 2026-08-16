@@ -1,13 +1,16 @@
 ---
 name: acrobat-cli
-description: Use the acrobat-cli command-line tool to automate Adobe Acrobat PDF handling on Windows, especially closing outline-markdown-export-native-*.pdf temp PDFs, injecting self-close OpenAction JavaScript, watching the temp folder, listing Acrobat windows, and closing outline tabs. Trigger when the user asks to run acrobat-cli, close outline temp PDFs, watch for outline PDFs, inject self-close PDF actions, or automate Acrobat via CLI.
+description: Use the acrobat-cli command-line tool to automate Adobe Acrobat and PDF handling on Windows. Supports closing outline-markdown-export-native-*.pdf temp PDFs, injecting self-close OpenAction JavaScript, watching the temp folder, listing Acrobat windows, closing outline tabs, and PDF document operations via the `pdf` subcommand (info, merge, split, rotate, delete, extract by bookmarks, encrypt, decrypt, bookmarks, inject). Trigger when the user asks to run acrobat-cli, close outline temp PDFs, watch for outline PDFs, inject self-close PDF actions, extract/bookmark PDF sections, or automate Acrobat/PDF via CLI.
 ---
 
 # Acrobat CLI
 
 ## Overview
 
-`acrobat-cli` is a Node.js CLI for Acrobat automation on Windows. Its main use is to make `outline-markdown-export-native-*.pdf` files close themselves automatically when Acrobat opens them, and to watch the system temp folder for these files.
+`acrobat-cli` is a Node.js CLI for Acrobat and PDF automation on Windows. Its main uses are:
+- Making `outline-markdown-export-native-*.pdf` files close themselves automatically when Acrobat opens them.
+- Watching the system temp folder for these files.
+- Performing PDF document operations through the `pdf` subcommand (info, merge, split, rotate, delete, extract by bookmarks, encrypt, decrypt, bookmarks, inject).
 
 ## Quick start
 
@@ -22,7 +25,18 @@ acrobat-cli watch
 acrobat-cli watch --dir=C:\Temp --once
 
 # Extract pages by bookmark sections (e.g. 综合题/拓展题)
-acrobat-cli extract --pdf=input.pdf --chapter=相似矩阵 --sections=综合,拓展 --output=out.pdf
+acrobat-cli pdf extract input.pdf --chapter 相似矩阵 --sections="综合,拓展" -o out.pdf
+
+# PDF info / merge / split / rotate / delete / encrypt / decrypt / bookmarks / inject
+acrobat-cli pdf info input.pdf
+acrobat-cli pdf merge a.pdf b.pdf -o merged.pdf
+acrobat-cli pdf split input.pdf --ranges 1-3,5 -o split_dir
+acrobat-cli pdf rotate input.pdf --pages 1 --angle 90 -o rotated.pdf
+acrobat-cli pdf delete input.pdf --pages 2,4 -o deleted.pdf
+acrobat-cli pdf encrypt input.pdf --user-password 123 --owner-password 456 -o encrypted.pdf
+acrobat-cli pdf decrypt encrypted.pdf --password 123 -o decrypted.pdf
+acrobat-cli pdf bookmarks input.pdf
+acrobat-cli pdf inject input.pdf
 
 # List Acrobat windows
 acrobat-cli list
@@ -68,25 +82,47 @@ For every matching file it finds, it injects the self-close action. This is usef
 - `--poll=<ms>`: polling interval, default 500 ms.
 - `--once`: process existing matching files and exit instead of watching continuously.
 
-### extract
+### pdf
 
-```bash
-acrobat-cli extract --pdf=<path> --chapter=<keyword> --sections=<a,b> --output=<path>
-```
-
-Extracts pages from a PDF based on bookmark sections. It finds the chapter containing `--chapter`, then selects child bookmarks matching the comma-separated `--sections` keywords (e.g. `综合,拓展`), and writes those pages to `--output`.
-
-Requires Python 3 and `pypdf`:
+The `pdf` group contains PDF document operations. Requires Python 3 and `pypdf`:
 
 ```bash
 pip install pypdf
 ```
 
-Example:
-
 ```bash
-acrobat-cli extract --pdf="26李林880题-数学一-试题分册.pdf" --chapter="相似矩阵" --sections="综合,拓展" --output="相似矩阵综合提高篇.pdf"
+# Info
+acrobat-cli pdf info <file>
+
+# Merge
+acrobat-cli pdf merge a.pdf b.pdf -o merged.pdf
+
+# Split
+acrobat-cli pdf split <file> --ranges 1-3,5 -o split_dir
+
+# Rotate
+acrobat-cli pdf rotate <file> --pages 1-3 --angle 90 -o rotated.pdf
+
+# Delete pages
+acrobat-cli pdf delete <file> --pages 2,4 -o deleted.pdf
+
+# Extract pages by bookmark sections
+acrobat-cli pdf extract <file> --chapter 相似矩阵 --sections="综合,拓展" -o out.pdf
+
+# Encrypt
+acrobat-cli pdf encrypt <file> --user-password 123 --owner-password 456 -o encrypted.pdf
+
+# Decrypt
+acrobat-cli pdf decrypt <file> --password 123 -o decrypted.pdf
+
+# Bookmarks
+acrobat-cli pdf bookmarks <file>
+
+# Inject self-close
+acrobat-cli pdf inject <file>
 ```
+
+`pdf extract` finds the chapter containing `--chapter`, then selects child bookmarks matching the comma-separated `--sections` keywords (e.g. `综合,拓展`), and writes those pages to `--output`.
 
 ### list
 
@@ -130,5 +166,5 @@ acrobat-cli watch --poll=300
 
 ## Resources
 
-- `scripts/extract_by_bookmarks.py` — Python helper used by `extract`
+- `scripts/pdf/*.py` — Python helpers used by `pdf` subcommands
 - See the project README for installation and deployment.

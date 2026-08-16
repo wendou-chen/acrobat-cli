@@ -5,10 +5,11 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const { execFile } = require("child_process");
-const { PDFDocument, PDFName, PDFString } = require("pdf-lib");
+const { injectSelfClose, SELF_CLOSE_JS } = require("./lib/inject.js");
+const { runPython } = require("./lib/python.js");
+const { runPdfCommand } = require("./commands/pdf.js");
 
 const OUTLINE_RE = /outline-markdown-export-native-.*\.pdf$/i;
-const SELF_CLOSE_JS = "this.closeDoc(true);";
 const DEFAULT_POLL_MS = 500;
 
 function log(message) {
@@ -38,6 +39,9 @@ Commands:
                                    Extract pages from a PDF by bookmark sections.
                                    Example:
                                      acrobat-cli extract --pdf=input.pdf --chapter=相似矩阵 --sections=综合,拓展 --output=out.pdf
+  pdf <command> [options]          PDF document operations.
+                                   Commands: info, merge, split, rotate, delete,
+                                   extract, encrypt, decrypt, bookmarks, inject.
   list                             List Acrobat windows and their titles.
   close-outline                    Best-effort close of Acrobat tabs whose title matches
                                    outline-markdown-export-native-*.pdf (sends Ctrl+W).
@@ -59,18 +63,6 @@ Examples:
 function version() {
   const pkg = require("./package.json");
   log(pkg.version);
-}
-
-async function injectSelfClose(pdfPath, outputPath) {
-  const bytes = fs.readFileSync(pdfPath);
-  const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
-  const action = doc.context.obj({
-    S: "JavaScript",
-    JS: PDFString.of(SELF_CLOSE_JS),
-  });
-  doc.catalog.set(PDFName.of("OpenAction"), action);
-  const modified = await doc.save();
-  fs.writeFileSync(outputPath, modified);
 }
 
 async function cmdInject(args) {
@@ -95,13 +87,26 @@ async function cmdInject(args) {
 function parseArgs(argv) {
   const positional = [];
   const options = {};
-  for (const arg of argv) {
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
     if (arg.startsWith("--")) {
       const eq = arg.indexOf("=");
       if (eq >= 0) {
         options[arg.slice(2, eq)] = arg.slice(eq + 1);
       } else {
-        options[arg.slice(2)] = true;
+        const key = arg.slice(2);
+        if (i + 1 < argv.length && !argv[i + 1].startsWith("-")) {
+          options[key] = argv[++i];
+        } else {
+          options[key] = true;
+        }
+      }
+    } else if (arg.startsWith("-") && arg.length === 2) {
+      const key = arg.slice(1);
+      if (i + 1 < argv.length && !argv[i + 1].startsWith("-")) {
+        options[key] = argv[++i];
+      } else {
+        options[key] = true;
       }
     } else {
       positional.push(arg);
@@ -167,35 +172,6 @@ async function cmdWatch(args) {
   };
   process.on("SIGINT", stop);
   process.on("SIGTERM", stop);
-}
-
-function runPython(scriptPath, args) {
-  return new Promise((resolve, reject) => {
-    const candidates = process.env.PYTHON ? [process.env.PYTHON] : ["python", "py"];
-    let index = 0;
-    const attempt = () => {
-      if (index >= candidates.length) {
-        reject(new Error("python/py not found. Install Python 3 or set PYTHON env var."));
-        return;
-      }
-      const python = candidates[index++];
-      execFile(python, [scriptPath, ...args], {
-        windowsHide: true,
-        maxBuffer: 8 * 1024 * 1024,
-      }, (err, stdout, stderr) => {
-        if (err) {
-          if (err.code === "ENOENT") {
-            attempt();
-            return;
-          }
-          reject(new Error(stderr.trim() || err.message));
-          return;
-        }
-        resolve(stdout.trim());
-      });
-    };
-    attempt();
-  });
 }
 
 async function cmdExtract(args) {
@@ -346,6 +322,9 @@ async function main() {
       break;
     case "extract":
       await cmdExtract(args);
+      break;
+    case "pdf":
+      await runPdfCommand(args);
       break;
     case "list":
       await cmdList();
