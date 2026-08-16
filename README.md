@@ -19,6 +19,7 @@ Windows 下用于 Acrobat 自动化的小型 CLI，重点解决 `outline-markdow
 | `acrobat-cli pdf bookmarks <file>` | 输出书签树 |
 | `acrobat-cli pdf inject <file>` | 注入 self-close OpenAction |
 | `acrobat-cli ui open <pdf>` | 以隐藏后台实例打开 PDF |
+| `acrobat-cli ui save <pdf>` | 用隐藏 Acrobat COM 保存 PDF |
 | `acrobat-cli ui save-as <pdf> <output>` | 用隐藏 Acrobat COM 另存 PDF |
 | `acrobat-cli ui print <pdf> [--pages 1-3]` | 用隐藏 Acrobat COM 打印 PDF |
 | `acrobat-cli ui close --pid <pid>` | 关闭指定隐藏实例 |
