@@ -1,8 +1,8 @@
 # acrobat-cli
 
-Windows 下用于 Acrobat 自动化的小型 CLI，重点解决 `outline-markdown-export-native-*.pdf` 临时 PDF 被 Acrobat 打开后无法自动关闭的问题。
+Windows 下用于 Acrobat/PDF 自动化的开源 CLI。支持隐藏后台 Acrobat 实例、COM 操作、原生导出检测、PDF 文档处理、表单填写、OCR、注释、签名、书签提取等。
 
-参考 [microsoft/playwright-cli](https://github.com/microsoft/playwright-cli) 的结构：CLI + `skills/acrobat-cli/SKILL.md` 技能说明。
+项目结构参考 [microsoft/playwright-cli](https://github.com/microsoft/playwright-cli)：一个轻量 Node CLI + `skills/acrobat-cli/SKILL.md` 技能说明。代码为自研实现，仅使用 MIT 许可的 `pdf-lib`，不包含 Playwright/微软任何专有代码。
 
 ## 功能
 
@@ -43,6 +43,25 @@ Windows 下用于 Acrobat 自动化的小型 CLI，重点解决 `outline-markdow
 | `acrobat-cli list` | 列出 Acrobat 窗口 |
 | `acrobat-cli close-outline` | 尽力关闭标题匹配 outline 的 Acrobat 标签（Ctrl+W） |
 | `acrobat-cli status` | 显示 Acrobat 状态与 TEMP 中的 outline PDF |
+
+## 为什么不会侵权
+
+- 本仓库是**自研 Node.js CLI**，不复制 Playwright/微软的源码。
+- 参考的只是 `playwright-cli` 的**组织方式**：CLI 入口 + `bin` + `skills/SKILL.md`，这是通用工程模式。
+- 唯一第三方运行依赖是 MIT 许可的 `pdf-lib`。
+- Acrobat COM 操作、PowerShell 脚本、Python PDF 处理均为本项目原创。
+- 社区中已有 Acrobat 动作/插件项目（如 `binghe/Acrobat-Actions`），但本项目的定位是**命令行自动化 + AI 技能集成**，与它们不构成代码冲突。
+
+## 与 playwright-cli 的对齐
+
+| 维度 | playwright-cli | acrobat-cli |
+|---|---|---|
+| 入口 | `bin: { "playwright-cli": "playwright-cli.js" }` | `bin: { "acrobat-cli": "acrobat-cli.js" }` |
+| 参数解析 | `minimist` | 内置 `parseArgs`（支持 `--key=value` 与 `-o value`） |
+| 技能 | `skills/.../SKILL.md` | `skills/acrobat-cli/SKILL.md` |
+| Node 要求 | `>=18` | `>=18` |
+| 测试 | `playwright test` | `node --test tests/*.test.js` |
+| License | Apache-2.0 | MIT |
 
 ## 环境要求
 
@@ -114,8 +133,8 @@ Test-Path "C:\Users\admin\.claude\skills\acrobat-cli\SKILL.md"
 Agent 部署验收标准：
 
 ```powershell
-acrobat-cli version   # 应输出 0.1.0
-npm test              # 应 2 个测试全部通过
+acrobat-cli version   # 应输出 0.2.0
+npm test              # 应 21 个测试全部通过
 acrobat-cli status    # 应能显示 Acrobat 状态
 Test-Path "C:\Users\admin\.claude\skills\acrobat-cli\SKILL.md"  # 应为 True
 ```
@@ -182,6 +201,26 @@ Claude Code 技能位于：
 1. 在 Acrobat 中：`文件 → 打印 → Microsoft Print to PDF` 另存
 2. 或使用本项目的书签提取方案：按 PDF 书签直接提取页面生成新文件，完全绕过 Acrobat 保存
 3. 根治建议：在 D 盘 Acrobat 中执行 `帮助 → 修复安装`，或重新登录 Adobe 账号
+
+## 测试
+
+```powershell
+npm test
+```
+
+当前测试覆盖：
+
+- 后台状态文件管理
+- PDF 信息/合并/拆分/旋转/删除/插入空白/裁剪/替换页/水印/压缩/PDF-A/书签提取/加密解密/书签输出
+- 表单字段检测、注释、签名、OCR
+- outline 临时 PDF 匹配与 self-close 注入
+
+多轮压力测试：
+
+```powershell
+# 连续跑 3 轮
+1..3 | ForEach-Object { Write-Host "=== Round $_ ==="; node --test tests/*.test.js }
+```
 
 ## 回退
 

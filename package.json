@@ -1,14 +1,38 @@
 {
   "name": "acrobat-cli",
-  "version": "0.1.0",
-  "description": "CLI for Acrobat/PDF automation: inject self-close actions, watch temp folder, list Acrobat windows, extract/bookmark PDF sections, and more PDF document operations.",
+  "version": "0.2.0",
+  "description": "CLI for Acrobat/PDF automation: hidden background Acrobat, COM operations, native-export detection, PDF manipulation, form fill, OCR, annotation, signing, and more.",
   "license": "MIT",
+  "author": "wendou-chen",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wendou-chen/acrobat-cli.git"
+  },
+  "homepage": "https://github.com/wendou-chen/acrobat-cli#readme",
+  "keywords": [
+    "acrobat",
+    "pdf",
+    "cli",
+    "automation",
+    "adobe",
+    "playwright-cli"
+  ],
   "bin": {
     "acrobat-cli": "acrobat-cli.js"
   },
+  "files": [
+    "acrobat-cli.js",
+    "commands",
+    "lib",
+    "scripts",
+    "skills",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "start": "node acrobat-cli.js",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "test:loop": "node --test --test-reporter=dot tests/*.test.js && node --test --test-reporter=dot tests/*.test.js"
   },
   "dependencies": {
     "pdf-lib": "^1.17.1"
