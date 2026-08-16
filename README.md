@@ -4,22 +4,7 @@ Windows 下用于 Acrobat 自动化的小型 CLI，重点解决 `outline-markdow
 
 参考 [microsoft/playwright-cli](https://github.com/microsoft/playwright-cli) 的结构：CLI + `skills/acrobat-cli/SKILL.md` 技能说明。
 
-## 安装
-
-```powershell
-cd D:\Coding工具专用文件夹\acrobat-cli
-npm install
-npm link
-```
-
-安装后全局命令：
-
-```powershell
-acrobat-cli version
-acrobat-cli help
-```
-
-## 命令
+## 功能
 
 | 命令 | 说明 |
 |---|---|
@@ -29,7 +14,97 @@ acrobat-cli help
 | `acrobat-cli close-outline` | 尽力关闭标题匹配 outline 的 Acrobat 标签（Ctrl+W） |
 | `acrobat-cli status` | 显示 Acrobat 状态与 TEMP 中的 outline PDF |
 
-## 示例
+## 环境要求
+
+- Windows 10/11
+- Node.js 18+
+- npm
+- Adobe Acrobat Pro DC（用于实际 PDF 自动关闭验证）
+- 可选：GitHub CLI `gh`（用于开源仓库操作）
+
+## 部署方式
+
+### 一、人工部署（Manual Deployment）
+
+适合人类按步骤操作：
+
+```powershell
+# 1. 进入项目目录
+cd D:\Coding工具专用文件夹\acrobat-cli
+
+# 2. 安装依赖
+npm install
+
+# 3. 全局链接，生成 acrobat-cli 命令
+npm link
+
+# 4. 验证安装
+acrobat-cli version
+acrobat-cli help
+
+# 5. 安装 Claude Code 技能（可选）
+# 把 skills/acrobat-cli 复制到全局技能目录
+Copy-Item -Recurse -Force "D:\Coding工具专用文件夹\acrobat-cli\skills\acrobat-cli" "C:\Users\admin\.claude\skills\acrobat-cli"
+
+# 6. 验证技能
+Get-ChildItem "C:\Users\admin\.claude\skills\acrobat-cli"
+```
+
+### 二、Agent 部署（Agent Deployment）
+
+适合 AI Agent 直接执行。以下命令可整段交给 Agent 运行：
+
+```powershell
+# 1. 环境检查
+node --version
+npm --version
+git --version
+
+# 2. 安装依赖并全局链接
+cd D:\Coding工具专用文件夹\acrobat-cli
+npm install
+npm link
+
+# 3. 运行自检
+npm test
+acrobat-cli version
+acrobat-cli status
+
+# 4. 安装 Claude Code 技能
+$skillSrc = "D:\Coding工具专用文件夹\acrobat-cli\skills\acrobat-cli"
+$skillDst = "C:\Users\admin\.claude\skills\acrobat-cli"
+if (Test-Path $skillDst) { Remove-Item -Recurse -Force $skillDst }
+Copy-Item -Recurse -Force $skillSrc $skillDst
+
+# 5. 验证技能文件存在
+Test-Path "C:\Users\admin\.claude\skills\acrobat-cli\SKILL.md"
+```
+
+Agent 部署验收标准：
+
+```powershell
+acrobat-cli version   # 应输出 0.1.0
+npm test              # 应 2 个测试全部通过
+acrobat-cli status    # 应能显示 Acrobat 状态
+Test-Path "C:\Users\admin\.claude\skills\acrobat-cli\SKILL.md"  # 应为 True
+```
+
+### 三、管理员权限说明
+
+如果需要把 Acrobat 默认安装路径从 C 盘切换到 D 盘，需要修改 HKLM 注册表，必须管理员权限：
+
+```powershell
+# 以管理员身份运行 PowerShell 后执行：
+$d = 'D:\Adobe\Acrobat DC\Acrobat'
+reg add "HKLM\SOFTWARE\Adobe\Adobe Acrobat\DC\InstallPath" /ve /t REG_SZ /d $d /f
+reg add "HKLM\SOFTWARE\WOW6432Node\Adobe\Adobe Acrobat\DC\InstallPath" /ve /t REG_SZ /d $d /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\Acrobat.exe" /ve /t REG_SZ /d "$d\Acrobat.exe" /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\Acrobat.exe" /v Path /t REG_SZ /d "$d\" /f
+```
+
+> 注意：如果当前 Agent 沙箱没有管理员权限，上述命令会报 `Access is denied`。请让用户以管理员身份启动终端后再执行，或由人工手动执行。
+
+## 使用示例
 
 ```powershell
 # 手动给一个临时 PDF 注入自关闭动作
@@ -49,6 +124,14 @@ Claude Code 技能位于：
 - 项目内：`skills/acrobat-cli/SKILL.md`
 - 全局：`C:\Users\admin\.claude\skills\acrobat-cli\SKILL.md`
 
+## Acrobat 提取页面后无法保存的已知问题
+
+如果你遇到 Acrobat “提取页面”后无法另存为 PDF，这是 Acrobat 的已知问题/安装异常，和本 CLI 无关。可用以下方式绕过：
+
+1. 在 Acrobat 中：`文件 → 打印 → Microsoft Print to PDF` 另存
+2. 或使用本项目的书签提取方案：按 PDF 书签直接提取页面生成新文件，完全绕过 Acrobat 保存
+3. 根治建议：在 D 盘 Acrobat 中执行 `帮助 → 修复安装`，或重新登录 Adobe 账号
+
 ## 回退
 
 ```powershell
@@ -56,3 +139,7 @@ npm unlink -g acrobat-cli
 Remove-Item -Recurse -Force "C:\Users\admin\.claude\skills\acrobat-cli"
 Remove-Item -Recurse -Force "D:\Coding工具专用文件夹\acrobat-cli"
 ```
+
+## License
+
+MIT License，详见 [LICENSE](LICENSE)。
