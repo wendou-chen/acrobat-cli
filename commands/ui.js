@@ -7,7 +7,7 @@ const {
   isPidAlive,
   closeAll,
 } = require("../lib/background.js");
-const { saveAs } = require("../lib/com.js");
+const { saveAs, printPdf } = require("../lib/com.js");
 
 async function cmdOpen(args) {
   const file = args._[0];
@@ -23,6 +23,21 @@ async function cmdSaveAs(args) {
   if (!dst) throw new Error("ui save-as requires an output path");
   await saveAs(src, dst);
   return `Saved as: ${dst}`;
+}
+
+async function cmdPrint(args) {
+  const file = args._[0];
+  if (!file) throw new Error("ui print requires a PDF path");
+  let first = 0;
+  let last = -1;
+  if (args.options.pages) {
+    const m = String(args.options.pages).match(/^(\d+)(?:-(\d+))?$/);
+    if (!m) throw new Error("ui print --pages must be like 1 or 1-3");
+    first = Number(m[1]) - 1;
+    last = m[2] ? Number(m[2]) - 1 : first;
+  }
+  await printPdf(file, first, last);
+  return `Printed: ${file}`;
 }
 
 async function cmdClose(args) {
@@ -53,6 +68,7 @@ async function cmdCloseAll() {
 const handlers = {
   open: cmdOpen,
   "save-as": cmdSaveAs,
+  print: cmdPrint,
   close: cmdClose,
   list: cmdList,
   status: cmdStatus,
