@@ -96,3 +96,23 @@ test("pdf bookmarks prints outline", async () => {
   const out = await runPython(pdfScript("bookmarks"), [src]);
   assert.match(out, /第十四章 相似矩阵/);
 });
+
+test("pdf insert-blank adds a page", async () => {
+  const file = await makeTempPdf(3);
+  const out = path.join(os.tmpdir(), `insert-${Date.now()}.pdf`);
+  const result = await runPython(pdfScript("insert_blank"), ["--after", "2", "--output", out, file]);
+  assert.match(result, /Inserted blank page after 2/);
+  const loaded = await PDFDocument.load(fs.readFileSync(out));
+  assert.strictEqual(loaded.getPageCount(), 4);
+  fs.unlinkSync(file); fs.unlinkSync(out);
+});
+
+test("pdf crop keeps page count", async () => {
+  const file = await makeTempPdf(2);
+  const out = path.join(os.tmpdir(), `crop-${Date.now()}.pdf`);
+  const result = await runPython(pdfScript("crop"), ["--pages", "1", "--box", "0,0,100,100", "--output", out, file]);
+  assert.match(result, /Cropped pages 1/);
+  const loaded = await PDFDocument.load(fs.readFileSync(out));
+  assert.strictEqual(loaded.getPageCount(), 2);
+  fs.unlinkSync(file); fs.unlinkSync(out);
+});

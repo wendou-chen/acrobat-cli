@@ -33,6 +33,8 @@ acrobat-cli pdf merge a.pdf b.pdf -o merged.pdf
 acrobat-cli pdf split input.pdf --ranges 1-3,5 -o split_dir
 acrobat-cli pdf rotate input.pdf --pages 1 --angle 90 -o rotated.pdf
 acrobat-cli pdf delete input.pdf --pages 2,4 -o deleted.pdf
+acrobat-cli pdf insert-blank input.pdf --after 2 -o inserted.pdf
+acrobat-cli pdf crop input.pdf --pages 1-3 --box 0,0,300,400 -o cropped.pdf
 acrobat-cli pdf encrypt input.pdf --user-password 123 --owner-password 456 -o encrypted.pdf
 acrobat-cli pdf decrypt encrypted.pdf --password 123 -o decrypted.pdf
 acrobat-cli pdf bookmarks input.pdf
@@ -115,6 +117,12 @@ acrobat-cli pdf rotate <file> --pages 1-3 --angle 90 -o rotated.pdf
 
 # Delete pages
 acrobat-cli pdf delete <file> --pages 2,4 -o deleted.pdf
+
+# Insert blank page
+acrobat-cli pdf insert-blank <file> --after 2 -o inserted.pdf
+
+# Crop pages
+acrobat-cli pdf crop <file> --pages 1-3 --box 0,0,300,400 -o cropped.pdf
 
 # Extract pages by bookmark sections
 acrobat-cli pdf extract <file> --chapter 相似矩阵 --sections="综合,拓展" -o out.pdf

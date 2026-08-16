@@ -54,6 +54,33 @@ async function cmdDelete(args) {
   return runPython(pdfScript("delete_pages"), ["--pages", pages, "--output", output, file]);
 }
 
+async function cmdInsertBlank(args) {
+  const file = args._[0];
+  const after = Number(args.options.after);
+  const output = args.options.output || args.options.o;
+  if (!file || !Number.isInteger(after) || after < 1) throw new Error("pdf insert-blank requires a file and --after <page>");
+  if (!output) throw new Error("pdf insert-blank requires --output/-o");
+  const width = Number(args.options.width || 595);
+  const height = Number(args.options.height || 842);
+  return runPython(pdfScript("insert_blank"), [
+    "--after", String(after),
+    "--width", String(width),
+    "--height", String(height),
+    "--output", output,
+    file,
+  ]);
+}
+
+async function cmdCrop(args) {
+  const file = args._[0];
+  const pages = args.options.pages;
+  const box = args.options.box;
+  const output = args.options.output || args.options.o;
+  if (!file || !pages || !box) throw new Error("pdf crop requires a file, --pages, --box");
+  if (!output) throw new Error("pdf crop requires --output/-o");
+  return runPython(pdfScript("crop"), ["--pages", pages, "--box", box, "--output", output, file]);
+}
+
 async function cmdExtract(args) {
   const file = args._[0] || args.options.pdf;
   const chapter = args.options.chapter;
@@ -113,6 +140,8 @@ const handlers = {
   split: cmdSplit,
   rotate: cmdRotate,
   delete: cmdDelete,
+  "insert-blank": cmdInsertBlank,
+  crop: cmdCrop,
   extract: cmdExtract,
   encrypt: cmdEncrypt,
   decrypt: cmdDecrypt,

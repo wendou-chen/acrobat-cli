@@ -13,6 +13,8 @@ Windows 下用于 Acrobat 自动化的小型 CLI，重点解决 `outline-markdow
 | `acrobat-cli pdf split <file> --ranges 1-3,5 -o outdir` | 按页码范围拆分 PDF |
 | `acrobat-cli pdf rotate <file> --pages 1-3 --angle 90 -o out.pdf` | 旋转指定页面 |
 | `acrobat-cli pdf delete <file> --pages 2,4 -o out.pdf` | 删除指定页面 |
+| `acrobat-cli pdf insert-blank <file> --after 2 -o out.pdf` | 在指定页后插入空白页 |
+| `acrobat-cli pdf crop <file> --pages 1-3 --box 0,0,300,400 -o out.pdf` | 裁剪指定页面 |
 | `acrobat-cli pdf extract <file> --chapter <kw> --sections a,b -o out.pdf` | 按书签提取章节页面 |
 | `acrobat-cli pdf encrypt <file> --user-password <p> --owner-password <p> -o out.pdf` | 加密 PDF |
 | `acrobat-cli pdf decrypt <file> --password <p> -o out.pdf` | 解密 PDF |
