@@ -4,6 +4,18 @@ Windows 下用于 Acrobat/PDF 自动化的开源 CLI。支持隐藏后台 Acroba
 
 项目结构参考 [microsoft/playwright-cli](https://github.com/microsoft/playwright-cli)：一个轻量 Node CLI + `skills/acrobat-cli/SKILL.md` 技能说明。代码为自研实现，仅使用 MIT 许可的 `pdf-lib`，不包含 Playwright/微软任何专有代码。
 
+## English Introduction
+
+**acrobat-cli** is an open-source Windows CLI for Adobe Acrobat / PDF automation. It launches hidden background Acrobat instances, performs COM operations (save, print, native-export detection), manipulates PDFs (merge, split, rotate, crop, watermark, compress, encrypt/decrypt, bookmark extraction), fills forms, runs OCR, adds annotations/signatures, and bundles a Claude Code skill.
+
+Inspired by the structure of [microsoft/playwright-cli](https://github.com/microsoft/playwright-cli), it is a lightweight Node.js CLI plus `SKILL.md`. All code is original; the only runtime dependency is the MIT-licensed `pdf-lib`. It does not include any code from Playwright or Microsoft.
+
+```bash
+npm install -g acrobat-cli
+acrobat-cli pdf info input.pdf
+acrobat-cli ui export input.pdf --format docx -o output.docx
+```
+
 ## 功能
 
 | 命令 | 说明 |
