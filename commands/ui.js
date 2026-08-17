@@ -14,8 +14,11 @@ const { runPython } = require("../lib/python.js");
 async function cmdOpen(args) {
   const file = args._[0];
   if (!file) throw new Error("ui open requires a PDF path");
-  const pid = await launchHidden(file);
-  return `Opened hidden Acrobat PID ${pid}: ${file}`;
+  const visible = Boolean(args.options.visible || args.options.foreground);
+  const pid = await launchHidden(file, { visible });
+  return visible
+    ? `Opened Acrobat (foreground) PID ${pid}: ${file}`
+    : `Opened hidden Acrobat PID ${pid}: ${file}`;
 }
 
 async function cmdSave(args) {

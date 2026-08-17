@@ -36,7 +36,7 @@ acrobat-cli ui export input.pdf --format docx -o output.docx
 | `acrobat-cli pdf decrypt <file> --password <p> -o out.pdf` | 解密 PDF |
 | `acrobat-cli pdf bookmarks <file>` | 输出书签树 |
 | `acrobat-cli pdf inject <file>` | 注入 self-close OpenAction |
-| `acrobat-cli ui open <pdf>` | 以隐藏后台实例打开 PDF |
+| `acrobat-cli ui open <pdf> [--visible]` | 打开 PDF（默认隐藏后台；`--visible`/`--foreground` 前台可见） |
 | `acrobat-cli ui save <pdf>` | 用隐藏 Acrobat COM 保存 PDF |
 | `acrobat-cli ui save-as <pdf> <output>` | 用隐藏 Acrobat COM 另存 PDF |
 | `acrobat-cli ui print <pdf> [--pages 1-3]` | 用隐藏 Acrobat COM 打印 PDF |
