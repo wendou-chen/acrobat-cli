@@ -16,6 +16,13 @@ acrobat-cli pdf info input.pdf
 acrobat-cli ui export input.pdf --format docx -o output.docx
 ```
 
+## 社区认可 / LINUX DO
+
+本项目开源于中文社区 [LINUX DO](https://linux.do)，认可并感谢 LINUX DO 提供的交流与推广平台。
+
+- LINUX DO 社区主页：https://linux.do
+- LINUX DO「开源推广」规范：https://linux.do/t/topic/1776670
+
 ## 功能
 
 | 命令 | 说明 |
