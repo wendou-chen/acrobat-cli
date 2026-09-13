@@ -62,8 +62,16 @@ acrobat-cli ui status --pid <pid>
 acrobat-cli ui close --pid <pid>
 acrobat-cli ui close-all
 
-# List Acrobat windows
+# List Acrobat windows and background processes
 acrobat-cli list
+
+# Diagnose hung/hidden background Acrobat instances
+acrobat-cli doctor
+
+# Clear background zombie processes that block new launches
+acrobat-cli doctor --fix
+# or directly:
+acrobat-cli kill-zombies
 
 # Best-effort close outline tabs in Acrobat
 acrobat-cli close-outline
@@ -169,19 +177,36 @@ acrobat-cli pdf inject <file>
 ### ui
 
 ```bash
-acrobat-cli ui open <pdf> [--visible]
+acrobat-cli ui open <pdf>
 acrobat-cli ui save <pdf>
 acrobat-cli ui save-as <pdf> <output>
 acrobat-cli ui print <pdf> [--pages 1-3]
-acrobat-cli ui export <pdf> --format txt|png|docx|xlsx|pptx|html -o <output> [--native-only]
-acrobat-cli ui native-check <pdf>
+acrobat-cli ui export <pdf> --format txt|png|docx|xlsx|pptx|html -o <output>
 acrobat-cli ui close --pid <pid>
 acrobat-cli ui list
 acrobat-cli ui status --pid <pid>
 acrobat-cli ui close-all
 ```
 
-Launches Acrobat as an independent background instance using `/n`; the default is hidden (`Start-Process -WindowStyle Hidden`). Add `--visible` / `--foreground` to open in the foreground. It records the PID and only closes instances started by the CLI, so your normal Acrobat windows are not affected. `save`, `save-as`, and `print` use Acrobat COM. `export` tries Acrobat native `doc.SaveAs(..., com.adobe.acrobat.*)` first; if the JS bridge/filter is unavailable, `ui native-check` reports it and `export` falls back to PyMuPDF/python-docx/openpyxl.
+Launches Acrobat as an independent hidden background instance using `/n` and `Start-Process -WindowStyle Hidden`. It records the PID and only closes instances started by the CLI, so your normal Acrobat windows are not affected. `save`, `save-as`, and `print` use Acrobat COM in hidden mode. `export` tries Acrobat native `doc.SaveAs(..., com.adobe.acrobat.*)` first; if the installed Acrobat lacks the filter, it falls back to PyMuPDF/python-docx/openpyxl.
+
+### doctor
+
+```bash
+acrobat-cli doctor [--fix]
+```
+
+Diagnoses all Acrobat processes in the system. Reports visible windows vs. headless/zombie background instances.
+- Detects single-instance launch deadlock: Acrobat processes running in background with NO visible windows. In this state, double-clicking Acrobat or PDF files appears to do nothing because new instances try to pass activation to the hidden background instance.
+- `--fix`: Automatically terminates headless/zombie Acrobat processes (`MainWindowHandle == 0`), restoring normal launch behavior immediately.
+
+### kill-zombies
+
+```bash
+acrobat-cli kill-zombies
+```
+
+Safely terminates background Acrobat processes that have no main window handle (`MainWindowHandle == 0`), while keeping any process with an active, visible document window untouched. Use this when Acrobat won't open or when background instances pile up.
 
 ### list
 
@@ -189,7 +214,7 @@ Launches Acrobat as an independent background instance using `/n`; the default i
 acrobat-cli list
 ```
 
-Lists Acrobat processes that have a main window title.
+Lists Acrobat windows with titles and HWNDs, as well as background/headless processes.
 
 ### close-outline
 
@@ -254,6 +279,34 @@ acrobat-cli watch --poll=300
 
 # Then export from Obsidian/kaoyan as usual.
 # Any outline temp PDF that appears will be made self-closing.
+```
+
+## Troubleshooting: Acrobat Won't Open / Single-Instance Deadlock
+
+### Symptom:
+- Double-clicking Acrobat icon or PDF files does nothing; no window appears.
+- In `AcrobatToTray` (or other tray managers), the PDF process is NOT shown.
+- Attempting to run as Administrator suddenly brings up the window or works, while normal launching fails.
+
+### Root Cause:
+1. **Single-Instance Deadlock**: Acrobat uses named mutexes (`ACROSEMAPHORE_A25`) and DDE window messages to enforce single-instance behavior.
+2. **Hidden / Orphaned Window**: An earlier Acrobat instance was hidden into tray via `SW_HIDE`, but its tracking record was lost (e.g. tray manager restarted, crashed, or called `ClearAllHidden`).
+3. **Tray Manager Filtering**: `AcrobatToTray` filters out windows that are `!IsWindowVisible && !UiIsHiddenWindow`, so an untracked hidden window completely disappears from the UI and cannot be unhidden via the tray menu.
+4. **Zombie Accumulation**: Every subsequent double-click spawns a new pair of broker/renderer processes (`Acrobat.exe`) that detect the mutex, attempt DDE handover to the invisible instance, fail to activate, and stall in the background without showing any UI.
+5. **Why Admin Launch Worked**: Launching with elevated privileges (High Integrity Level) bypasses user-level UIPI / DDE pipeline blocks, forcing window wake-up and state refresh.
+
+### Solution:
+```bash
+# 1. Inspect status and diagnose
+acrobat-cli doctor
+
+# 2. One-click repair: kill headless zombie instances
+acrobat-cli doctor --fix
+# Or:
+acrobat-cli kill-zombies
+
+# 3. If using PowerShell directly:
+Get-Process Acrobat | Where-Object { $_.MainWindowHandle -eq 0 } | Stop-Process -Force
 ```
 
 ## Resources

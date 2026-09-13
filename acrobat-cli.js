@@ -56,7 +56,12 @@ Commands:
   ui <command> [options]           Control hidden background Acrobat instances.
                                    Commands: open, save, save-as, print, export,
                                    close, list, status, close-all.
-  list                             List Acrobat windows and their titles.
+  doctor [--fix]                   Diagnose Acrobat processes, detect hung/hidden
+                                   background instances and single-instance deadlocks.
+                                   --fix: safely terminate headless zombie instances.
+  kill-zombies                     Terminate background Acrobat processes without main
+                                   windows to resolve launch deadlocks.
+  list                             List Acrobat windows and background processes.
   close-outline                    Best-effort close of Acrobat tabs whose title matches
                                    outline-markdown-export-native-*.pdf (sends Ctrl+W).
   status                           Show Acrobat status and outline temp PDFs.
@@ -284,38 +289,64 @@ function runPowerShell(script) {
       windowsHide: true,
       maxBuffer: 1024 * 1024,
     }, (err, stdout, stderr) => {
-      if (err) {
+      if (err && !stdout) {
         reject(new Error(stderr.trim() || err.message));
         return;
       }
-      resolve(stdout.trim());
+      resolve((stdout || "").trim());
     });
   });
 }
 
 async function listAcrobatWindows() {
-  const script = `
-$ErrorActionPreference = 'SilentlyContinue'
-Get-Process -Name 'Acrobat' | Where-Object { $_.MainWindowTitle } |
-  Select-Object Id, MainWindowTitle |
-  ConvertTo-Json -Compress
-`;
-  const out = await runPowerShell(script);
-  if (!out) return [];
-  const parsed = JSON.parse(out);
-  return Array.isArray(parsed) ? parsed : [parsed];
+  const script = "$ErrorActionPreference = 'SilentlyContinue'; $procs = Get-Process -Name 'Acrobat', 'AcroRd32' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle }; if ($procs) { $procs | Select-Object Id, MainWindowTitle | ConvertTo-Json -Compress }";
+  try {
+    const out = await runPowerShell(script);
+    if (!out) return [];
+    const parsed = JSON.parse(out);
+    return Array.isArray(parsed) ? parsed : [parsed];
+  } catch {
+    return [];
+  }
+}
+
+async function getAllAcrobatProcesses() {
+  const script = "$ErrorActionPreference = 'SilentlyContinue'; $procs = Get-Process -Name 'Acrobat', 'AcroRd32' -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, MainWindowTitle, MainWindowHandle, Responding, @{Name='WorkingSetMB'; Expression={[math]::Round($_.WorkingSet64/1MB, 1)}}; if ($procs) { $procs | ConvertTo-Json -Compress }";
+  try {
+    const out = await runPowerShell(script);
+    if (!out) return [];
+    const parsed = JSON.parse(out);
+    return Array.isArray(parsed) ? parsed : [parsed];
+  } catch {
+    return [];
+  }
 }
 
 async function cmdList() {
   try {
-    const windows = await listAcrobatWindows();
-    if (windows.length === 0) {
-      log("No Acrobat window with a title found.");
+    const procs = await getAllAcrobatProcesses();
+    if (procs.length === 0) {
+      log("No Acrobat processes found.");
       return;
     }
-    log("Acrobat windows:");
-    for (const w of windows) {
-      log(`  PID ${w.Id}: ${w.MainWindowTitle}`);
+    const visible = procs.filter((p) => p.MainWindowTitle && p.MainWindowHandle);
+    const headless = procs.filter((p) => !p.MainWindowTitle || !p.MainWindowHandle);
+
+    if (visible.length > 0) {
+      log("Acrobat windows:");
+      for (const w of visible) {
+        log(`  PID ${w.Id}: ${w.MainWindowTitle} (HWND 0x${Number(w.MainWindowHandle).toString(16).toUpperCase()})`);
+      }
+    } else {
+      log("No Acrobat window with a visible title found.");
+    }
+
+    if (headless.length > 0) {
+      log(`\nBackground / headless processes (${headless.length}):`);
+      for (const p of headless) {
+        log(`  PID ${p.Id}: ${p.ProcessName} (${p.WorkingSetMB || 0} MB, no visible main window)`);
+      }
+      log("Run `acrobat-cli doctor` to inspect or `acrobat-cli kill-zombies` to clean up.");
     }
   } catch (e) {
     error(`list failed: ${e.message}`);
@@ -323,25 +354,11 @@ async function cmdList() {
 }
 
 async function cmdCloseOutline() {
-  const script = `
-$ErrorActionPreference = 'SilentlyContinue'
-$ws = New-Object -ComObject WScript.Shell
-$targets = Get-Process -Name 'Acrobat' | Where-Object { $_.MainWindowTitle -match 'outline-markdown-export-native-' }
-foreach ($p in $targets) {
-  $null = $ws.AppActivate($p.Id)
-  Start-Sleep -Milliseconds 200
-  $ws.SendKeys('^w')
-  Start-Sleep -Milliseconds 300
-}
-if ($targets.Count -eq 0) { 'NO_MATCH' } else { "CLOSED=$($targets.Count)" }
-`;
+  const tempDir = os.tmpdir().replace(/\\/g, "\\\\");
+  const script = "$ErrorActionPreference = 'SilentlyContinue'; $ws = New-Object -ComObject WScript.Shell; $closedCount = 0; $targets = Get-Process -Name 'Acrobat', 'AcroRd32' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -match 'outline-markdown' }; foreach ($p in $targets) { $null = $ws.AppActivate($p.Id); Start-Sleep -Milliseconds 200; $ws.SendKeys('^w'); Start-Sleep -Milliseconds 300; $closedCount++ }; $outlineFiles = Get-ChildItem '" + tempDir + "' -Filter 'outline-markdown-export-native-*.pdf' -ErrorAction SilentlyContinue; $deletedCount = 0; foreach ($f in $outlineFiles) { try { Remove-Item -LiteralPath $f.FullName -Force -ErrorAction Stop; $deletedCount++ } catch {} }; Write-Host \"CLOSED_TABS=$closedCount, DELETED_TEMP=$deletedCount\"";
   try {
     const out = await runPowerShell(script);
-    if (out.includes("NO_MATCH")) {
-      log("No outline temp PDF tab found in Acrobat title.");
-    } else {
-      log(out);
-    }
+    log(out || "CLOSED_TABS=0, DELETED_TEMP=0");
   } catch (e) {
     error(`close-outline failed: ${e.message}`);
   }
@@ -349,22 +366,107 @@ if ($targets.Count -eq 0) { 'NO_MATCH' } else { "CLOSED=$($targets.Count)" }
 
 async function cmdStatus() {
   try {
-    const windows = await listAcrobatWindows();
-    log(`Acrobat running: ${windows.length > 0 ? "yes" : "no"}`);
-    if (windows.length > 0) {
-      log("Acrobat windows:");
-      for (const w of windows) {
+    const procs = await getAllAcrobatProcesses();
+    const visible = procs.filter((p) => p.MainWindowTitle && p.MainWindowHandle);
+    const headless = procs.filter((p) => !p.MainWindowTitle || !p.MainWindowHandle);
+
+    log(`Acrobat running: ${procs.length > 0 ? "yes" : "no"} (${procs.length} process${procs.length === 1 ? "" : "es"})`);
+    if (visible.length > 0) {
+      log("Visible windows:");
+      for (const w of visible) {
         log(`  PID ${w.Id}: ${w.MainWindowTitle}`);
       }
     }
+    if (headless.length > 0) {
+      log(`Background / zombie instances: ${headless.length} (PIDs: ${headless.map((p) => p.Id).join(", ")})`);
+      if (visible.length === 0) {
+        log("  [WARN] Acrobat is running in background without any visible window.");
+        log("  [WARN] This may cause single-instance launch deadlocks or tray-hidden orphan state.");
+        log("  Run `acrobat-cli doctor --fix` or `acrobat-cli kill-zombies` to resolve.");
+      }
+    }
     const tempDir = os.tmpdir();
-    const outlineFiles = fs.readdirSync(tempDir).filter((n) => OUTLINE_RE.test(n));
+    let outlineFiles = [];
+    try {
+      outlineFiles = fs.readdirSync(tempDir).filter((n) => OUTLINE_RE.test(n));
+    } catch {}
     log(`Outline temp PDFs in ${tempDir}: ${outlineFiles.length}`);
     for (const name of outlineFiles) {
       log(`  ${name}`);
     }
   } catch (e) {
     error(`status failed: ${e.message}`);
+  }
+}
+
+async function cmdDoctor(args) {
+  try {
+    log("=== Acrobat Doctor ===");
+    const procs = await getAllAcrobatProcesses();
+    if (procs.length === 0) {
+      log("Status: OK (No Acrobat processes running).");
+      return;
+    }
+    log(`Total Acrobat processes found: ${procs.length}`);
+    const visible = procs.filter((p) => p.MainWindowTitle && p.MainWindowHandle);
+    const headless = procs.filter((p) => !p.MainWindowTitle || !p.MainWindowHandle);
+
+    if (visible.length > 0) {
+      log(`\nVisible window(s): ${visible.length}`);
+      for (const w of visible) {
+        log(`  - [PID ${w.Id}] ${w.MainWindowTitle} (HWND 0x${Number(w.MainWindowHandle).toString(16).toUpperCase()})`);
+      }
+    } else {
+      log("\nVisible window(s): 0");
+    }
+
+    if (headless.length > 0) {
+      log(`\nHeadless / background process(es): ${headless.length}`);
+      for (const p of headless) {
+        log(`  - [PID ${p.Id}] ${p.ProcessName} (Memory: ${p.WorkingSetMB || 0} MB, MainWindowHandle: 0)`);
+      }
+    }
+
+    const doFix = Boolean(args.options.fix || args.options.f);
+    if (headless.length > 0 && visible.length === 0) {
+      log("\n[ISSUE DETECTED] SINGLE-INSTANCE LAUNCH DEADLOCK");
+      log("Acrobat processes exist in background, but no visible main window is open.");
+      log("Double-clicking Acrobat or PDF files will silently stall or spawn more zombie processes.");
+      if (doFix) {
+        log("\nApplying fix: terminating headless zombie processes...");
+        const killScript = "$ErrorActionPreference = 'SilentlyContinue'; $procs = Get-Process -Name 'Acrobat', 'AcroRd32' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -eq 0 }; $cnt = @($procs).Count; if ($procs) { $procs | Stop-Process -Force }; Write-Host \"KILLED=$cnt\"";
+        const res = await runPowerShell(killScript);
+        log(res || "Fixed.");
+        log("Zombie processes cleared. You can now launch Acrobat or open PDFs normally.");
+      } else {
+        log("\nRecommendation: Run `acrobat-cli doctor --fix` or `acrobat-cli kill-zombies` to clear them.");
+      }
+    } else if (headless.length > 2 && visible.length > 0) {
+      log(`\n[NOTICE] Extra background helper/zombie processes (${headless.length}).`);
+      log("Normal Acrobat 64-bit architecture uses 1 broker + 1 renderer process.");
+      if (doFix) {
+        log("\nCleaning up extra headless processes while keeping active window...");
+        const killScript = "$ErrorActionPreference = 'SilentlyContinue'; $procs = Get-Process -Name 'Acrobat', 'AcroRd32' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -eq 0 }; $cnt = @($procs).Count; if ($procs) { $procs | Stop-Process -Force }; Write-Host \"KILLED=$cnt\"";
+        const res = await runPowerShell(killScript);
+        log(res || "Cleaned.");
+      } else {
+        log("Run `acrobat-cli doctor --fix` if you want to trim redundant background helpers.");
+      }
+    } else {
+      log("\nStatus: Healthy.");
+    }
+  } catch (e) {
+    error(`doctor failed: ${e.message}`);
+  }
+}
+
+async function cmdKillZombies() {
+  try {
+    const killScript = "$ErrorActionPreference = 'SilentlyContinue'; $procs = @(Get-Process -Name 'Acrobat', 'AcroRd32' -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -eq 0 }); if ($procs.Count -gt 0) { $ids = ($procs | ForEach-Object { $_.Id }) -join ', '; $procs | Stop-Process -Force; Write-Host \"Killed $($procs.Count) zombie process(es): $ids\" } else { Write-Host 'No zombie Acrobat processes found.' }";
+    const out = await runPowerShell(killScript);
+    log(out || "Done.");
+  } catch (e) {
+    error(`kill-zombies failed: ${e.message}`);
   }
 }
 
@@ -414,6 +516,12 @@ async function main() {
     case "ui":
       await runUiCommand(args);
       break;
+    case "doctor":
+      await cmdDoctor(args);
+      break;
+    case "kill-zombies":
+      await cmdKillZombies();
+      break;
     case "list":
       await cmdList();
       break;
@@ -443,5 +551,6 @@ module.exports = {
   scanAndInject,
   processPdfFile,
   listAcrobatWindows,
+  getAllAcrobatProcesses,
   runPowerShell,
 };

@@ -50,6 +50,18 @@ test("pdf split by ranges", async () => {
   fs.rmSync(outDir, { recursive: true, force: true });
 });
 
+test("pdf split with custom names", async () => {
+  const file = await makeTempPdf(5);
+  const outDir = path.join(os.tmpdir(), `split-names-${Date.now()}`);
+  const result = await runPython(pdfScript("split"), ["--ranges", "1-2,4", "--names", "sec1,sec2.pdf", "--output", outDir, file]);
+  assert.match(result, /sec1\.pdf/);
+  assert.match(result, /sec2\.pdf/);
+  assert.ok(fs.existsSync(path.join(outDir, "sec1.pdf")));
+  assert.ok(fs.existsSync(path.join(outDir, "sec2.pdf")));
+  fs.unlinkSync(file);
+  fs.rmSync(outDir, { recursive: true, force: true });
+});
+
 test("pdf rotate rotates pages", async () => {
   const file = await makeTempPdf(2);
   const out = path.join(os.tmpdir(), `rotate-${Date.now()}.pdf`);

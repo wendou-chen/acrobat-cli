@@ -58,8 +58,10 @@ acrobat-cli ui export input.pdf --format docx -o output.docx
 | `acrobat-cli ui list` | 列出 CLI 启动的隐藏实例 |
 | `acrobat-cli ui status --pid <pid>` | 查看隐藏实例状态 |
 | `acrobat-cli ui close-all` | 关闭所有 CLI 启动的隐藏实例 |
+| `acrobat-cli doctor [--fix]` | 诊断 Acrobat 进程状态，检测并一键修复单实例启动死锁与后台僵尸进程 |
+| `acrobat-cli kill-zombies` | 安全清理无可见主窗口的后台僵尸 Acrobat 进程 |
 | `acrobat-cli watch [--dir=<path>] [--poll=<ms>] [--once]` | 监听目录中的 outline 临时 PDF，自动注入 self-close |
-| `acrobat-cli list` | 列出 Acrobat 窗口 |
+| `acrobat-cli list` | 列出 Acrobat 窗口及后台无界面进程 |
 | `acrobat-cli close-outline` | 尽力关闭标题匹配 outline 的 Acrobat 标签（Ctrl+W） |
 | `acrobat-cli status` | 显示 Acrobat 状态与 TEMP 中的 outline PDF |
 
@@ -153,7 +155,7 @@ Agent 部署验收标准：
 
 ```powershell
 acrobat-cli version   # 应输出 0.2.0
-npm test              # 应 21 个测试全部通过
+npm test              # 应 22 个测试全部通过
 acrobat-cli status    # 应能显示 Acrobat 状态
 Test-Path "C:\Users\admin\.claude\skills\acrobat-cli\SKILL.md"  # 应为 True
 ```

@@ -4,9 +4,12 @@ import os
 import sys
 from pypdf import PdfReader, PdfWriter
 
+import re
+
 def parse_ranges(spec):
     ranges = []
-    for part in spec.split(","):
+    parts = re.split(r"[,;\s]+", spec.strip())
+    for part in parts:
         part = part.strip()
         if not part:
             continue
@@ -22,12 +25,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ranges", required=True)
     parser.add_argument("--output", "-o", required=True)
+    parser.add_argument("--names", help="Comma-separated list of output filenames")
     parser.add_argument("file")
     args = parser.parse_args()
 
     reader = PdfReader(args.file)
     total = len(reader.pages)
     ranges = parse_ranges(args.ranges)
+    names = [n.strip() for n in args.names.split(",")] if args.names else []
     os.makedirs(args.output, exist_ok=True)
     for idx, (start, end) in enumerate(ranges, 1):
         writer = PdfWriter()
@@ -35,10 +40,17 @@ def main():
             if p < 0 or p >= total:
                 raise SystemExit(f"page out of range: {p + 1}")
             writer.add_page(reader.pages[p])
-        out_path = os.path.join(args.output, f"part-{idx}.pdf")
+        if idx - 1 < len(names) and names[idx - 1]:
+            name = names[idx - 1]
+            if not name.lower().endswith(".pdf"):
+                name += ".pdf"
+            out_name = name
+        else:
+            out_name = f"part-{idx}.pdf"
+        out_path = os.path.join(args.output, out_name)
         with open(out_path, "wb") as f:
             writer.write(f)
-        print(f"part-{idx}.pdf: pages {start}-{end}")
+        print(f"{out_name}: pages {start}-{end}")
     return 0
 
 if __name__ == "__main__":

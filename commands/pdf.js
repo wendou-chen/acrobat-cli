@@ -26,10 +26,14 @@ async function cmdSplit(args) {
   const file = args._[0];
   const ranges = args.options.ranges;
   const output = args.options.output || args.options.o;
+  const names = args.options.names;
   if (!file) throw new Error("pdf split requires a file path");
   if (!ranges) throw new Error("pdf split requires --ranges");
   if (!output) throw new Error("pdf split requires --output/-o");
-  return runPython(pdfScript("split"), ["--ranges", ranges, "--output", output, file]);
+  const pyArgs = ["--ranges", ranges, "--output", output];
+  if (names) pyArgs.push("--names", names);
+  pyArgs.push(file);
+  return runPython(pdfScript("split"), pyArgs);
 }
 
 async function cmdRotate(args) {
